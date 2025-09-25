@@ -1,6 +1,6 @@
 # Machine Learning and AI in Cancer Prognosis Prediction and Treatment Selection
 
-![Cancer Research Banner]
+
 
 A machine learning project focused on predicting cancer prognosis and recommending personalized treatment plans based on patient data. This repository contains the code, models, and resources used in the research.
 
