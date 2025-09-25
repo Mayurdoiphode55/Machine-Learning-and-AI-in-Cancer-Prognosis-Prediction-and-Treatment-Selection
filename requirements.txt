@@ -3,10 +3,12 @@ plotly
 matplotlib
 pandas
 streamlit-option-menu
-pickle5
 Pillow
 numpy
 seaborn
 joblib
 python-dotenv
 requests
+google-generativeai
+scikit-learn
+xgboost
