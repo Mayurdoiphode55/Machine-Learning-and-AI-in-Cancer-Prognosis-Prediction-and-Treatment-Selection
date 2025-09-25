@@ -1,6 +1,6 @@
 # Machine Learning and AI in Cancer Prognosis Prediction and Treatment Selection
 
-![Cancer Research Banner](https://www.cancer.gov/sites/g/files/xnrzdm211/files/styles/cgov_article/public/cgov_contextual_image/2021-11/CGOV-ML-AI-in-cancer-research-rev.jpg)
+![Cancer Research Banner]
 
 A machine learning project focused on predicting cancer prognosis and recommending personalized treatment plans based on patient data. This repository contains the code, models, and resources used in the research.
 
@@ -8,6 +8,7 @@ A machine learning project focused on predicting cancer prognosis and recommendi
 - [About the Project](#about-the-project)
 - [Features](#-features)
 - [Installation](#-installation)
+- [Configuration](#-configuration)
 - [Usage](#-usage)
 - [Model Information](#-model-information)
 - [Technologies Used](#-technologies-used)
@@ -50,6 +51,18 @@ To set up this project locally, follow these steps:
     pip install -r requirements.txt
     ```
     *(Note: If you don't have a `requirements.txt` file, you can create one by running `pip freeze > requirements.txt` after installing your packages.)*
+
+## 🔑 Configuration
+
+To use the generative AI or chatbot features, you need a Google AI API key.
+
+1.  **Get your API Key** from [Google AI Studio](https://aistudio.google.com/app/apikey).
+2.  **Create a `.env` file** in the root directory of the project.
+3.  **Add your API key** to the `.env` file like this:
+    ```
+    GOOGLE_API_KEY="YOUR_API_KEY_HERE"
+    ```
+    The project code will use this file to access your key securely.
 
 ## 🚀 Usage
 
