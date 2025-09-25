@@ -1,6 +1,7 @@
-git clone 
-cd 
+git clone https://github.com/Mayurdoiphode55/Machine-Learning-and-AI-in-Cancer-Prognosis-Prediction-and-Treatment-Selection.git
+cd cd Machine-Learning-and-AI-in-Cancer-Prognosis-Prediction-and-Treatment-Selection
 -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
 streamlit run app.py
+
