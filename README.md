@@ -7,11 +7,9 @@ A machine learning project focused on predicting cancer prognosis and recommendi
 ## 📋 Table of Contents
 - [About the Project](#about-the-project)
 - [Features](#-features)
-- [Dataset](#-dataset)
 - [Installation](#-installation)
 - [Usage](#-usage)
-- [Model Architecture](#-model-architecture)
-- [Results](#-results)
+- [Model Information](#-model-information)
 - [Technologies Used](#-technologies-used)
 - [License](#-license)
 - [Contact](#-contact)
@@ -27,18 +25,9 @@ The aim is to build a reliable tool that can assist oncologists in making data-d
 ## ✨ Features
 
 - **Prognosis Prediction:** Predicts patient survival rates or recurrence likelihood.
-- **Treatment Recommendation:** Suggests personalized treatment plans (e.g., chemotherapy, radiation, targeted therapy).
+- **Treatment Recommendation:** Suggests personalized treatment plans.
 - **Data Preprocessing:** Scripts for cleaning and preparing raw medical data.
 - **Model Training:** Notebooks and scripts to train various ML models.
-- **Interactive Chatbot (Optional):** An interface to interact with the model and get predictions.
-
-## 📊 Dataset
-
-The model was trained on the `[Name of Your Dataset, e.g., TCGA, SEER, or custom dataset]`.
-
-- **Source:** [Link to the dataset or describe its source, e.g., Kaggle, UCI Repository, etc.]
-- **Description:** [Briefly describe the dataset, including the number of samples, features, and the target variable.]
-- **Key Features:** `[e.g., Gene expression data, tumor size, patient age, mutation status, etc.]`
 
 ## ⚙️ Installation
 
@@ -60,46 +49,19 @@ To set up this project locally, follow these steps:
     ```sh
     pip install -r requirements.txt
     ```
-    *(Note: If you don't have a `requirements.txt` file yet, you can create one by running `pip freeze > requirements.txt` after installing your packages.)*
+    *(Note: If you don't have a `requirements.txt` file, you can create one by running `pip freeze > requirements.txt` after installing your packages.)*
 
 ## 🚀 Usage
 
-To run the project, follow these instructions.
+The general workflow for this project is as follows:
 
-1.  **Run the data preprocessing script:**
-    ```sh
-    python code/preprocess_data.py
-    ```
+1.  **Prepare the data** using the scripts in the `data` or `code` folders.
+2.  **Train a model** by running the Jupyter Notebooks.
+3.  **Use the trained model** for making predictions on new data.
 
-2.  **Train the model:**
-    Open and run the Jupyter Notebook for training.
-    ```sh
-    jupyter notebook notebooks/model_training.ipynb
-    ```
+## 🧠 Model Information
 
-3.  **Run the application (e.g., a Flask app or a script for prediction):**
-    ```sh
-    python app.py
-    ```
-
-## 🧠 Model Architecture
-
-This project uses a `[Your Model Name, e.g., Random Forest Classifier, Neural Network, etc.]`.
-
-- **Algorithm:** [Briefly explain why you chose this algorithm.]
-- **Key Hyperparameters:** [List any important hyperparameters you tuned, e.g., learning rate, number of trees.]
-- **Evaluation Metrics:** The model's performance was evaluated using `[e.g., Accuracy, F1-Score, ROC-AUC]`.
-
-## 📈 Results
-
-The final model achieved the following performance on the test set:
-
-- **Accuracy:** `[e.g., 95%]`
-- **Precision:** `[e.g., 0.92]`
-- **Recall:** `[e.g., 0.94]`
-- **F1-Score:** `[e.g., 0.93]`
-
-[You can also add a confusion matrix image or other plots here to showcase results.]
+This project explores various machine learning models (such as Random Forest, Gradient Boosting, and Neural Networks) to find the best-performing algorithm for this task. The models are evaluated using standard classification metrics to determine the most accurate and reliable approach for prognosis and treatment prediction.
 
 ## 🛠️ Technologies Used
 
@@ -108,8 +70,8 @@ The final model achieved the following performance on the test set:
   - Scikit-learn
   - Pandas & NumPy
   - Matplotlib & Seaborn
-  - TensorFlow / PyTorch (if used)
-  - Flask (if you built a web app)
+  - TensorFlow / PyTorch
+  - Flask
 - **Tools:** Jupyter Notebook, Git & GitHub
 
 ## 📄 License
@@ -118,6 +80,6 @@ This project is licensed under the MIT License - see the `LICENSE` file for deta
 
 ## 📧 Contact
 
-Mayur Doiphode - [Your Email Address] - [Your LinkedIn Profile URL (Optional)]
+Mayur Doiphode
 
 Project Link: [https://github.com/Mayurdoiphode55/Machine-Learning-and-AI-in-Cancer-Prognosis-Prediction-and-Treatment-Selection](https://github.com/Mayurdoiphode55/Machine-Learning-and-AI-in-Cancer-Prognosis-Prediction-and-Treatment-Selection)
