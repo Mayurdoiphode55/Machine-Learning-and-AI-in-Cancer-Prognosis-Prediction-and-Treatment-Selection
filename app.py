@@ -22,6 +22,32 @@ import requests
 
 load_dotenv()
 
+
+def get_positive_probability(model, input_data, positive_class=1):
+    """
+    Get the probability of the positive class from any sklearn model.
+    Handles models with predict_proba, decision_function, or plain predict.
+    """
+    try:
+        proba = model.predict_proba(input_data)
+        if isinstance(positive_class, str):
+            class_idx = list(model.classes_).index(positive_class)
+        else:
+            class_idx = list(model.classes_).index(positive_class) if hasattr(model, 'classes_') else positive_class
+        return proba[0][class_idx] * 100
+    except AttributeError:
+        try:
+            decision = model.decision_function(input_data)
+            # Convert decision function to probability using sigmoid
+            score = decision[0] if hasattr(decision, '__len__') else decision
+            prob = 1 / (1 + np.exp(-score))
+            return prob * 100
+        except AttributeError:
+            # Last resort: use predict (binary)
+            pred = model.predict(input_data)
+            return 100.0 if pred[0] == positive_class else 0.0
+
+
 # loading the models
 diabetes_model = joblib.load("models/diabetes_model.sav")
 heart_model = joblib.load("models/heart_disease_model.sav")
@@ -135,20 +161,23 @@ if selected == 'Diabetes Prediction':  # pagetitle
 
     # button
     if st.button("Diabetes test result"):
-        diabetes_prediction=[[]]
-        diabetes_prediction = diabetes_model.predict(
-            [[Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, BMI, DiabetesPedigreefunction, Age]])
-
-        # after the prediction is done if the value in the list at index is 0 is 1 then the person is diabetic
-        if diabetes_prediction[0] == 1:
-            diabetes_dig = "we are really sorry to say but it seems like you are Diabetic."
-            image = Image.open('Photo/positive.jpg')
-            st.image(image, caption='')
+        if not name or Age <= 0:
+            st.warning("Please enter your Name and Age before predicting.")
         else:
-            diabetes_dig = 'Congratulation!!! You are not diabetic'
-            image = Image.open('Photo/negative.jpg')
-            st.image(image, caption='')
-        st.success(name+' , ' + diabetes_dig)
+            positive_prob = get_positive_probability(diabetes_model,
+                [[Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, BMI, DiabetesPedigreefunction, Age]])
+
+            st.info(f"Prediction Confidence: {positive_prob:.1f}%")
+
+            if positive_prob >= 80:
+                diabetes_dig = "we are really sorry to say but it seems like you are Diabetic."
+                image = Image.open('Photo/positive.jpg')
+                st.image(image, caption='')
+            else:
+                diabetes_dig = 'Congratulation!!! You are not diabetic'
+                image = Image.open('Photo/negative.jpg')
+                st.image(image, caption='')
+            st.success(name+' , ' + diabetes_dig)
         
         
 
@@ -256,22 +285,23 @@ if selected == 'Heart disease Prediction':
 
     # button
     if st.button("Heart test result"):
-        heart_prediction=[[]]
-        # change the parameters according to the model
-        
-        # b=np.array(a, dtype=float)
-        heart_prediction = heart_model.predict([[age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak, slope, ca, thal]])
-
-        if heart_prediction[0] == 1:
-            heart_dig = 'we are really sorry to say but it seems like you have Heart Disease.'
-            image = Image.open('Photo/positive.jpg')
-            st.image(image, caption='')
-            
+        if not name or age <= 0:
+            st.warning("Please enter your Name and Age before predicting.")
         else:
-            heart_dig = "Congratulation , You don't have Heart Disease."
-            image = Image.open('Photo/negative.jpg')
-            st.image(image, caption='')
-        st.success(name +' , ' + heart_dig)
+            positive_prob = get_positive_probability(heart_model, [[age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak, slope, ca, thal]])
+
+            st.info(f"Prediction Confidence: {positive_prob:.1f}%")
+
+            if positive_prob >= 80:
+                heart_dig = 'we are really sorry to say but it seems like you have Heart Disease.'
+                image = Image.open('Photo/positive.jpg')
+                st.image(image, caption='')
+                
+            else:
+                heart_dig = "Congratulation , You don't have Heart Disease."
+                image = Image.open('Photo/negative.jpg')
+                st.image(image, caption='')
+            st.success(name +' , ' + heart_dig)
 
 
 
@@ -338,19 +368,25 @@ if selected == 'Parkison Prediction':
     
     # button
     if st.button("Parkinson test result"):
-        parkinson_prediction=[[]]
-        # change the parameters according to the model
-        parkinson_prediction = parkinson_model.predict([[MDVP, MDVPFIZ, MDVPFLO, MDVPJITTER, MDVPJitterAbs, MDVPRAP, MDVPPPQ, JitterDDP, MDVPShimmer,MDVPShimmer_dB, Shimmer_APQ3, ShimmerAPQ5, MDVP_APQ, ShimmerDDA, NHR, HNR,  RPDE, DFA, spread1, spread2, D2, PPE]])
-
-        if parkinson_prediction[0] == 1:
-            parkinson_dig = 'we are really sorry to say but it seems like you have Parkinson disease'
-            image = Image.open('Photo/positive.jpg')
-            st.image(image, caption='')
+        all_inputs = [MDVP, MDVPFIZ, MDVPFLO, MDVPJITTER, MDVPJitterAbs, MDVPRAP, MDVPPPQ, JitterDDP, MDVPShimmer, MDVPShimmer_dB, Shimmer_APQ3, ShimmerAPQ5, MDVP_APQ, ShimmerDDA, NHR, HNR, RPDE, DFA, spread1, spread2, D2, PPE]
+        if not name:
+            st.warning("Please enter your Name before predicting.")
+        elif all(v == 0 for v in all_inputs):
+            st.warning("Please enter valid clinical values. All inputs cannot be zero.")
         else:
-            parkinson_dig = "Congratulation , You don't have Parkinson disease"
-            image = Image.open('Photo/negative.jpg')
-            st.image(image, caption='')
-        st.success(name+' , ' + parkinson_dig)
+            positive_prob = get_positive_probability(parkinson_model, [all_inputs])
+
+            st.info(f"Prediction Confidence: {positive_prob:.1f}%")
+
+            if positive_prob >= 80:
+                parkinson_dig = 'we are really sorry to say but it seems like you have Parkinson disease'
+                image = Image.open('Photo/positive.jpg')
+                st.image(image, caption='')
+            else:
+                parkinson_dig = "Congratulation , You don't have Parkinson disease"
+                image = Image.open('Photo/negative.jpg')
+                st.image(image, caption='')
+            st.success(name+' , ' + parkinson_dig)
 
 
 
@@ -411,49 +447,54 @@ if selected == 'Lung Cancer Prediction':
 
     # Button
     if st.button("Predict Lung Cancer"):
-        # Create a DataFrame with user inputs
-        user_data = pd.DataFrame({
-            'GENDER': [gender],
-            'AGE': [age],
-            'SMOKING': [smoking],
-            'YELLOW_FINGERS': [yellow_fingers],
-            'ANXIETY': [anxiety],
-            'PEER_PRESSURE': [peer_pressure],
-            'CHRONICDISEASE': [chronic_disease],
-            'FATIGUE': [fatigue],
-            'ALLERGY': [allergy],
-            'WHEEZING': [wheezing],
-            'ALCOHOLCONSUMING': [alcohol_consuming],
-            'COUGHING': [coughing],
-            'SHORTNESSOFBREATH': [shortness_of_breath],
-            'SWALLOWINGDIFFICULTY': [swallowing_difficulty],
-            'CHESTPAIN': [chest_pain]
-        })
-
-        # Map string values to numeric
-        user_data.replace({'NO': 1, 'YES': 2}, inplace=True)
-
-        # Strip leading and trailing whitespaces from column names
-        user_data.columns = user_data.columns.str.strip()
-
-        # Convert columns to numeric where necessary
-        numeric_columns = ['AGE', 'FATIGUE', 'ALLERGY', 'ALCOHOLCONSUMING', 'COUGHING', 'SHORTNESSOFBREATH']
-        user_data[numeric_columns] = user_data[numeric_columns].apply(pd.to_numeric, errors='coerce')
-
-        # Perform prediction
-        cancer_prediction = lung_cancer_model.predict(user_data)
-
-        # Display result
-        if cancer_prediction[0] == 'YES':
-            cancer_result = "The model predicts that there is a risk of Lung Cancer."
-            image = Image.open('Photo/positive.jpg')
-            st.image(image, caption='')
+        if not name or age <= 0:
+            st.warning("Please enter your Name and Age before predicting.")
         else:
-            cancer_result = "The model predicts no significant risk of Lung Cancer."
-            image = Image.open('Photo/negative.jpg')
-            st.image(image, caption='')
+            # Create a DataFrame with user inputs
+            user_data = pd.DataFrame({
+                'GENDER': [gender],
+                'AGE': [age],
+                'SMOKING': [smoking],
+                'YELLOW_FINGERS': [yellow_fingers],
+                'ANXIETY': [anxiety],
+                'PEER_PRESSURE': [peer_pressure],
+                'CHRONICDISEASE': [chronic_disease],
+                'FATIGUE': [fatigue],
+                'ALLERGY': [allergy],
+                'WHEEZING': [wheezing],
+                'ALCOHOLCONSUMING': [alcohol_consuming],
+                'COUGHING': [coughing],
+                'SHORTNESSOFBREATH': [shortness_of_breath],
+                'SWALLOWINGDIFFICULTY': [swallowing_difficulty],
+                'CHESTPAIN': [chest_pain]
+            })
 
-        st.success(name + ', ' + cancer_result)
+            # Map string values to numeric
+            user_data.replace({'NO': 1, 'YES': 2, 'Male': 1, 'Female': 2}, inplace=True)
+
+            # Strip leading and trailing whitespaces from column names
+            user_data.columns = user_data.columns.str.strip()
+
+            # Convert all columns to numeric
+            for col in user_data.columns:
+                user_data[col] = pd.to_numeric(user_data[col], errors='coerce')
+
+            # Perform prediction with probability
+            positive_prob = get_positive_probability(lung_cancer_model, user_data, positive_class='YES')
+
+            st.info(f"Prediction Confidence: {positive_prob:.1f}%")
+
+            # Display result
+            if positive_prob >= 80:
+                cancer_result = "The model predicts that there is a risk of Lung Cancer."
+                image = Image.open('Photo/positive.jpg')
+                st.image(image, caption='')
+            else:
+                cancer_result = "The model predicts no significant risk of Lung Cancer."
+                image = Image.open('Photo/negative.jpg')
+                st.image(image, caption='')
+
+            st.success(name + ', ' + cancer_result)
 
 
 
@@ -502,19 +543,25 @@ if selected == 'Liver prediction':  # pagetitle
 
     # button
     if st.button("Liver test result"):
-        liver_prediction=[[]]
-        liver_prediction = liver_model.predict([[Sex,age,Total_Bilirubin,Direct_Bilirubin,Alkaline_Phosphotase,Alamine_Aminotransferase,Aspartate_Aminotransferase,Total_Protiens,Albumin,Albumin_and_Globulin_Ratio]])
-
-        # after the prediction is done if the value in the list at index is 0 is 1 then the person is diabetic
-        if liver_prediction[0] == 1:
-            image = Image.open('Photo/positive.jpg')
-            st.image(image, caption='')
-            liver_dig = "we are really sorry to say but it seems like you have liver disease."
+        clinical_values = [Total_Bilirubin, Direct_Bilirubin, Alkaline_Phosphotase, Alamine_Aminotransferase, Aspartate_Aminotransferase, Total_Protiens, Albumin, Albumin_and_Globulin_Ratio]
+        if not name or age <= 0:
+            st.warning("Please enter your Name and Age before predicting.")
+        elif all(v == 0 for v in clinical_values):
+            st.warning("Please enter valid clinical values. All medical inputs cannot be zero.")
         else:
-            image = Image.open('Photo/negative.jpg')
-            st.image(image, caption='')
-            liver_dig = "Congratulation , You don't have liver disease."
-        st.success(name+' , ' + liver_dig)
+            positive_prob = get_positive_probability(liver_model, [[Sex,age,Total_Bilirubin,Direct_Bilirubin,Alkaline_Phosphotase,Alamine_Aminotransferase,Aspartate_Aminotransferase,Total_Protiens,Albumin,Albumin_and_Globulin_Ratio]])
+
+            st.info(f"Prediction Confidence: {positive_prob:.1f}%")
+
+            if positive_prob >= 80:
+                image = Image.open('Photo/positive.jpg')
+                st.image(image, caption='')
+                liver_dig = "we are really sorry to say but it seems like you have liver disease."
+            else:
+                image = Image.open('Photo/negative.jpg')
+                st.image(image, caption='')
+                liver_dig = "Congratulation , You don't have liver disease."
+            st.success(name+' , ' + liver_dig)
 
 
 
@@ -567,35 +614,41 @@ if selected == 'Hepatitis prediction':
 
     # Button
     if st.button("Predict Hepatitis"):
-        # Create a DataFrame with user inputs
-        user_data = pd.DataFrame({
-            'Age': [age],
-            'Sex': [sex],
-            'ALB': [total_bilirubin],  # Correct the feature name
-            'ALP': [direct_bilirubin],  # Correct the feature name
-            'ALT': [alkaline_phosphatase],  # Correct the feature name
-            'AST': [alamine_aminotransferase],
-            'BIL': [aspartate_aminotransferase],  # Correct the feature name
-            'CHE': [total_proteins],  # Correct the feature name
-            'CHOL': [albumin],  # Correct the feature name
-            'CREA': [albumin_and_globulin_ratio],  # Correct the feature name
-            'GGT': [your_ggt_value],  # Replace 'your_ggt_value' with the actual value
-            'PROT': [your_prot_value]  # Replace 'your_prot_value' with the actual value
-        })
-
-        # Perform prediction
-        hepatitis_prediction = hepatitis_model.predict(user_data)
-        # Display result
-        if hepatitis_prediction[0] == 1:
-            hepatitis_result = "We are really sorry to say but it seems like you have Hepatitis."
-            image = Image.open('Photo/positive.jpg')
-            st.image(image, caption='')
+        if not name or age <= 0:
+            st.warning("Please enter your Name and Age before predicting.")
         else:
-            hepatitis_result = 'Congratulations, you do not have Hepatitis.'
-            image = Image.open('Photo/negative.jpg')
-            st.image(image, caption='')
+            # Create a DataFrame with user inputs
+            user_data = pd.DataFrame({
+                'Age': [age],
+                'Sex': [sex],
+                'ALB': [total_bilirubin],  # Correct the feature name
+                'ALP': [direct_bilirubin],  # Correct the feature name
+                'ALT': [alkaline_phosphatase],  # Correct the feature name
+                'AST': [alamine_aminotransferase],
+                'BIL': [aspartate_aminotransferase],  # Correct the feature name
+                'CHE': [total_proteins],  # Correct the feature name
+                'CHOL': [albumin],  # Correct the feature name
+                'CREA': [albumin_and_globulin_ratio],  # Correct the feature name
+                'GGT': [your_ggt_value],  # Replace 'your_ggt_value' with the actual value
+                'PROT': [your_prot_value]  # Replace 'your_prot_value' with the actual value
+            })
 
-        st.success(name + ', ' + hepatitis_result)
+            # Perform prediction with probability
+            positive_prob = get_positive_probability(hepatitis_model, user_data)
+
+            st.info(f"Prediction Confidence: {positive_prob:.1f}%")
+
+            # Display result
+            if positive_prob >= 80:
+                hepatitis_result = "We are really sorry to say but it seems like you have Hepatitis."
+                image = Image.open('Photo/positive.jpg')
+                st.image(image, caption='')
+            else:
+                hepatitis_result = 'Congratulations, you do not have Hepatitis.'
+                image = Image.open('Photo/negative.jpg')
+                st.image(image, caption='')
+
+            st.success(name + ', ' + hepatitis_result)
 
 
 
@@ -751,46 +804,52 @@ if selected == 'Chronic Kidney prediction':
 
     # Button
     if st.button("Predict Chronic Kidney Disease"):
-        # Create a DataFrame with user inputs
-        user_input = pd.DataFrame({
-            'age': [age],
-            'bp': [bp],
-            'sg': [sg],
-            'al': [al],
-            'su': [su],
-            'rbc': [rbc],
-            'pc': [pc],
-            'pcc': [pcc],
-            'ba': [ba],
-            'bgr': [bgr],
-            'bu': [bu],
-            'sc': [sc],
-            'sod': [sod],
-            'pot': [pot],
-            'hemo': [hemo],
-            'pcv': [pcv],
-            'wc': [wc],
-            'rc': [rc],
-            'htn': [htn],
-            'dm': [dm],
-            'cad': [cad],
-            'appet': [appet],
-            'pe': [pe],
-            'ane': [ane]
-        })
-
-        # Perform prediction
-        kidney_prediction = chronic_disease_model.predict(user_input)
-        # Display result
-        if kidney_prediction[0] == 1:
-            image = Image.open('Photo/positive.jpg')
-            st.image(image, caption='')
-            kidney_prediction_dig = "we are really sorry to say but it seems like you have kidney disease."
+        if not name:
+            st.warning("Please enter your Name before predicting.")
         else:
-            image = Image.open('Photo/negative.jpg')
-            st.image(image, caption='')
-            kidney_prediction_dig = "Congratulation , You don't have kidney disease."
-        st.success(name+' , ' + kidney_prediction_dig)
+            # Create a DataFrame with user inputs
+            user_input = pd.DataFrame({
+                'age': [age],
+                'bp': [bp],
+                'sg': [sg],
+                'al': [al],
+                'su': [su],
+                'rbc': [rbc],
+                'pc': [pc],
+                'pcc': [pcc],
+                'ba': [ba],
+                'bgr': [bgr],
+                'bu': [bu],
+                'sc': [sc],
+                'sod': [sod],
+                'pot': [pot],
+                'hemo': [hemo],
+                'pcv': [pcv],
+                'wc': [wc],
+                'rc': [rc],
+                'htn': [htn],
+                'dm': [dm],
+                'cad': [cad],
+                'appet': [appet],
+                'pe': [pe],
+                'ane': [ane]
+            })
+
+            # Perform prediction with probability
+            positive_prob = get_positive_probability(chronic_disease_model, user_input)
+
+            st.info(f"Prediction Confidence: {positive_prob:.1f}%")
+
+            # Display result
+            if positive_prob >= 80:
+                image = Image.open('Photo/positive.jpg')
+                st.image(image, caption='')
+                kidney_prediction_dig = "we are really sorry to say but it seems like you have kidney disease."
+            else:
+                image = Image.open('Photo/negative.jpg')
+                st.image(image, caption='')
+                kidney_prediction_dig = "Congratulation , You don't have kidney disease."
+            st.success(name+' , ' + kidney_prediction_dig)
 
 
 
@@ -859,53 +918,59 @@ if selected == 'Breast Cancer Prediction':
 
     # Button
     if st.button("Predict Breast Cancer"):
-        # Create a DataFrame with user inputs
-        user_input = pd.DataFrame({
-            'radius_mean': [radius_mean],
-            'texture_mean': [texture_mean],
-            'perimeter_mean': [perimeter_mean],
-            'area_mean': [area_mean],
-            'smoothness_mean': [smoothness_mean],
-            'compactness_mean': [compactness_mean],
-            'concavity_mean': [concavity_mean],
-            'concave points_mean': [concave_points_mean],  # Update this line
-            'symmetry_mean': [symmetry_mean],
-            'fractal_dimension_mean': [fractal_dimension_mean],
-            'radius_se': [radius_se],
-            'texture_se': [texture_se],
-            'perimeter_se': [perimeter_se],
-            'area_se': [area_se],
-            'smoothness_se': [smoothness_se],
-            'compactness_se': [compactness_se],
-            'concavity_se': [concavity_se],
-            'concave points_se': [concave_points_se],  # Update this line
-            'symmetry_se': [symmetry_se],
-            'fractal_dimension_se': [fractal_dimension_se],
-            'radius_worst': [radius_worst],
-            'texture_worst': [texture_worst],
-            'perimeter_worst': [perimeter_worst],
-            'area_worst': [area_worst],
-            'smoothness_worst': [smoothness_worst],
-            'compactness_worst': [compactness_worst],
-            'concavity_worst': [concavity_worst],
-            'concave points_worst': [concave_points_worst],  # Update this line
-            'symmetry_worst': [symmetry_worst],
-            'fractal_dimension_worst': [fractal_dimension_worst],
-        })
-
-        # Perform prediction
-        breast_cancer_prediction = breast_cancer_model.predict(user_input)
-        # Display result
-        if breast_cancer_prediction[0] == 1:
-            image = Image.open('Photo/positive.jpg')
-            st.image(image, caption='')
-            breast_cancer_result = "The model predicts that you have Breast Cancer."
+        if not name:
+            st.warning("Please enter your Name before predicting.")
         else:
-            image = Image.open('Photo/negative.jpg')
-            st.image(image, caption='')
-            breast_cancer_result = "The model predicts that you don't have Breast Cancer."
+            # Create a DataFrame with user inputs
+            user_input = pd.DataFrame({
+                'radius_mean': [radius_mean],
+                'texture_mean': [texture_mean],
+                'perimeter_mean': [perimeter_mean],
+                'area_mean': [area_mean],
+                'smoothness_mean': [smoothness_mean],
+                'compactness_mean': [compactness_mean],
+                'concavity_mean': [concavity_mean],
+                'concave points_mean': [concave_points_mean],  # Update this line
+                'symmetry_mean': [symmetry_mean],
+                'fractal_dimension_mean': [fractal_dimension_mean],
+                'radius_se': [radius_se],
+                'texture_se': [texture_se],
+                'perimeter_se': [perimeter_se],
+                'area_se': [area_se],
+                'smoothness_se': [smoothness_se],
+                'compactness_se': [compactness_se],
+                'concavity_se': [concavity_se],
+                'concave points_se': [concave_points_se],  # Update this line
+                'symmetry_se': [symmetry_se],
+                'fractal_dimension_se': [fractal_dimension_se],
+                'radius_worst': [radius_worst],
+                'texture_worst': [texture_worst],
+                'perimeter_worst': [perimeter_worst],
+                'area_worst': [area_worst],
+                'smoothness_worst': [smoothness_worst],
+                'compactness_worst': [compactness_worst],
+                'concavity_worst': [concavity_worst],
+                'concave points_worst': [concave_points_worst],  # Update this line
+                'symmetry_worst': [symmetry_worst],
+                'fractal_dimension_worst': [fractal_dimension_worst],
+            })
 
-        st.success(breast_cancer_result)
+            # Perform prediction with probability
+            positive_prob = get_positive_probability(breast_cancer_model, user_input)
+
+            st.info(f"Prediction Confidence: {positive_prob:.1f}%")
+
+            # Display result
+            if positive_prob >= 80:
+                image = Image.open('Photo/positive.jpg')
+                st.image(image, caption='')
+                breast_cancer_result = "The model predicts that you have Breast Cancer."
+            else:
+                image = Image.open('Photo/negative.jpg')
+                st.image(image, caption='')
+                breast_cancer_result = "The model predicts that you don't have Breast Cancer."
+
+            st.success(breast_cancer_result)
 
 
 import requests
@@ -921,7 +986,7 @@ if selected == 'Healthcare Chatbot':
     # Function to interact with the Gemini API
     def generate_response(user_input):
         genai.configure(api_key=API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         response = model.generate_content(user_input)
         # print(response.text)
         
